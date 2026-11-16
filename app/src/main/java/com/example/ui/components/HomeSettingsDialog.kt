@@ -29,11 +29,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.R
 
 @Composable
 fun HomeSettingsDialog(
+  kernelInfo: String? = null,
   onExitApp: () -> Unit,
   onDismiss: () -> Unit,
 ) {
@@ -65,6 +67,22 @@ fun HomeSettingsDialog(
             fontWeight = FontWeight.SemiBold,
             color = Color.White,
           )
+        }
+
+        if (kernelInfo != null) {
+          Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = Color(0xFF1D2232),
+            border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.35f)),
+            modifier = Modifier.fillMaxWidth(),
+          ) {
+            Text(
+              text = kernelInfo,
+              color = Color(0xFFBAE6FD),
+              fontSize = 12.sp,
+              modifier = Modifier.padding(12.dp),
+            )
+          }
         }
 
         Button(

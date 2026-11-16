@@ -44,7 +44,11 @@ private val StatusTextShadow =
   Shadow(color = Color.Black.copy(alpha = 0.65f), offset = Offset(0f, 1.5f), blurRadius = 3.5f)
 
 @Composable
-fun ReplicaStatusBar(status: DeviceStatus, modifier: Modifier = Modifier) {
+fun ReplicaStatusBar(
+  status: DeviceStatus,
+  activeUpgrades: Set<com.example.ai.PhoneUpgradeId> = emptySet(),
+  modifier: Modifier = Modifier,
+) {
   val wifiDesc =
     if (status.isWifiConnected) {
       stringResource(R.string.cd_wifi_connected)
@@ -57,6 +61,19 @@ fun ReplicaStatusBar(status: DeviceStatus, modifier: Modifier = Modifier) {
       else -> stringResource(R.string.cd_no_internet)
     }
   val batteryDesc = stringResource(R.string.cd_battery_status, status.batteryLevel)
+  val showSeconds = com.example.ai.PhoneUpgradeId.STATUS_SECONDS in activeUpgrades
+  val minimalMode = com.example.ai.PhoneUpgradeId.MINIMAL_STATUS_BAR in activeUpgrades
+  val batteryPill = com.example.ai.PhoneUpgradeId.STATUS_BATTERY_PILL in activeUpgrades
+  val showNetworkTag = com.example.ai.PhoneUpgradeId.STATUS_NETWORK_TAG in activeUpgrades
+  val showFpsBadge = com.example.ai.PhoneUpgradeId.HUD_FPS_BADGE in activeUpgrades
+  val accentColor = resolveAccentColor(activeUpgrades)
+
+  val timeDisplay =
+    if (showSeconds) {
+      java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+    } else {
+      status.formattedTime
+    }
 
   Row(
     modifier =
@@ -69,44 +86,78 @@ fun ReplicaStatusBar(status: DeviceStatus, modifier: Modifier = Modifier) {
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.SpaceBetween,
   ) {
-    Text(
-      text = status.formattedTime,
-      style =
-        TextStyle(
-          color = Color.White,
-          fontSize = 13.5.sp,
-          fontWeight = FontWeight.Medium,
-          shadow = StatusTextShadow,
-        ),
-      modifier = Modifier.testTag("status_time_text"),
-    )
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+      Text(
+        text = timeDisplay,
+        style =
+          TextStyle(
+            color = Color.White,
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.Medium,
+            shadow = StatusTextShadow,
+          ),
+        modifier = Modifier.testTag("status_time_text"),
+      )
+      if (showFpsBadge && !minimalMode) {
+        Text(
+          text = "60Hz",
+          color = accentColor,
+          fontSize = 9.5.sp,
+          fontWeight = FontWeight.Bold,
+        )
+      }
+    }
 
     Row(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-      WifiStatusIcon(
-        isConnected = status.isWifiConnected,
-        signalBars = status.wifiSignalBars,
-        modifier = Modifier.semantics { contentDescription = wifiDesc }.testTag("status_wifi_icon"),
-      )
+      if (!minimalMode) {
+        if (showNetworkTag && status.isWifiConnected) {
+          Text(
+            text = "${status.wifiSignalBars * 25}%",
+            color = accentColor,
+            fontSize = 9.5.sp,
+            fontWeight = FontWeight.SemiBold,
+          )
+        }
+        WifiStatusIcon(
+          isConnected = status.isWifiConnected,
+          signalBars = status.wifiSignalBars,
+          modifier = Modifier.semantics { contentDescription = wifiDesc }.testTag("status_wifi_icon"),
+        )
 
-      if (status.isCellularConnected || !status.hasInternet) {
-        CellularStatusCluster(
-          isCellularConnected = status.isCellularConnected,
-          hasInternet = status.hasInternet,
+        if (status.isCellularConnected || !status.hasInternet) {
+          CellularStatusCluster(
+            isCellularConnected = status.isCellularConnected,
+            hasInternet = status.hasInternet,
+            modifier =
+              Modifier.semantics { contentDescription = networkDesc }
+                .testTag("status_network_icon"),
+          )
+        }
+      }
+
+      val batteryComposable: @Composable () -> Unit = {
+        BatteryStatusIndicator(
+          level = status.batteryLevel,
+          isCharging = status.isCharging,
           modifier =
-            Modifier.semantics { contentDescription = networkDesc }
-              .testTag("status_network_icon"),
+            Modifier.semantics { contentDescription = batteryDesc }.testTag("status_battery_icon"),
         )
       }
 
-      BatteryStatusIndicator(
-        level = status.batteryLevel,
-        isCharging = status.isCharging,
-        modifier =
-          Modifier.semantics { contentDescription = batteryDesc }.testTag("status_battery_icon"),
-      )
+      if (batteryPill) {
+        Box(
+          modifier =
+            Modifier.background(Color.Black.copy(alpha = 0.50f), RoundedCornerShape(10.dp))
+              .padding(horizontal = 6.dp, vertical = 1.dp),
+        ) {
+          batteryComposable()
+        }
+      } else {
+        batteryComposable()
+      }
     }
   }
 }
