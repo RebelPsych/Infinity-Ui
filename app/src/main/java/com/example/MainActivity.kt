@@ -42,6 +42,12 @@ class MainActivity : ComponentActivity() {
     }
   }
 
+  override fun onNewIntent(intent: android.content.Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    configureAppCheck(this, intent)
+  }
+
   override fun onWindowFocusChanged(hasFocus: Boolean) {
     super.onWindowFocusChanged(hasFocus)
     if (hasFocus) {
