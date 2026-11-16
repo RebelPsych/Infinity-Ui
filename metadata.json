@@ -1,0 +1,6 @@
+{
+  "name": "Home Screen",
+  "description": "Full-screen immersive homescreen replica with live device battery, time, and connectivity indicators, 3-button navigation, long-press exit menu, and swipe-up empty app drawer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
